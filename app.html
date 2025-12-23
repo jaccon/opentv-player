@@ -18,6 +18,10 @@
                     <span class="history-icon">📋</span>
                     <span class="history-text">Histórico</span>
                 </button>
+                <button id="serverToggleBtn" class="btn btn-server" title="Modo Servidor">
+                    <span>🌐</span>
+                    <span id="serverStatus">Servidor</span>
+                </button>
                 <div class="url-input-container">
                     <input type="text" id="urlInput" placeholder="Cole a URL do M3U aqui..." class="url-input">
                 </div>
@@ -38,6 +42,56 @@
                     <div id="savedUrlsList" class="saved-urls-list">
                         <div class="empty-state">
                             <p>Nenhuma URL salva ainda</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal do Servidor -->
+        <div id="serverModal" class="modal" style="display: none;">
+            <div class="modal-content server-modal">
+                <div class="modal-header">
+                    <h2>🌐 Modo Servidor</h2>
+                    <button class="modal-close" id="closeServerModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="server-status-container">
+                        <div id="serverStatusInfo" class="server-status-info">
+                            <div class="server-status-badge" id="serverBadge">
+                                <span class="status-dot"></span>
+                                <span id="statusText">Desativado</span>
+                            </div>
+                            <p class="server-description">Compartilhe seus canais na rede local. Qualquer dispositivo poderá acessar via navegador.</p>
+                        </div>
+
+                        <div id="serverInfo" class="server-info" style="display: none;">
+                            <div class="info-card">
+                                <div class="info-label">Endereço de Acesso:</div>
+                                <div class="info-value">
+                                    <input type="text" id="serverUrl" readonly class="server-url-input">
+                                    <button class="btn btn-copy" onclick="copyServerUrl()" title="Copiar URL">
+                                        📋
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">IP Local:</div>
+                                <div class="info-value" id="serverIp">-</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Porta:</div>
+                                <div class="info-value" id="serverPort">2323</div>
+                            </div>
+                            <div class="server-qr">
+                                <p>📱 Escaneie o QR Code ou digite o endereço no navegador</p>
+                            </div>
+                        </div>
+
+                        <div class="server-actions">
+                            <button id="toggleServerBtn" class="btn btn-large btn-primary">
+                                Ativar Servidor
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -15,10 +15,22 @@ let lastLoadedUrl = ''; // Última URL carregada
 const elements = {
     loadUrlBtn: document.getElementById('loadUrlBtn'),
     savedUrlsBtn: document.getElementById('savedUrlsBtn'),
+    serverToggleBtn: document.getElementById('serverToggleBtn'),
     urlInput: document.getElementById('urlInput'),
     savedUrlsModal: document.getElementById('savedUrlsModal'),
     savedUrlsList: document.getElementById('savedUrlsList'),
     closeModal: document.getElementById('closeModal'),
+    serverModal: document.getElementById('serverModal'),
+    closeServerModal: document.getElementById('closeServerModal'),
+    toggleServerBtn: document.getElementById('toggleServerBtn'),
+    serverStatusInfo: document.getElementById('serverStatusInfo'),
+    serverInfo: document.getElementById('serverInfo'),
+    serverBadge: document.getElementById('serverBadge'),
+    statusText: document.getElementById('statusText'),
+    serverUrl: document.getElementById('serverUrl'),
+    serverIp: document.getElementById('serverIp'),
+    serverPort: document.getElementById('serverPort'),
+    serverStatus: document.getElementById('serverStatus'),
     searchInput: document.getElementById('searchInput'),
     channelsList: document.getElementById('channelsList'),
     videoPlayer: document.getElementById('videoPlayer'),
@@ -37,16 +49,30 @@ const elements = {
     tabBtns: document.querySelectorAll('.tab-btn')
 };
 
+// Estado do servidor
+let serverRunning = false;
+
 // Inicialização
 async function init() {
     await loadFavorites();
     await loadSavedUrls();
+    await loadServerStatus();
     setupEventListeners();
     updateCounts();
     
     // Listener para menu
     ipcRenderer.on('trigger-load-m3u', () => {
         loadM3uFile();
+    });
+    
+    // Listener para toggle de servidor via menu
+    ipcRenderer.on('toggle-server', () => {
+        showServerModal();
+    });
+    
+    // Listener para mudanças no status do servidor
+    ipcRenderer.on('server-status-changed', (event, status) => {
+        updateServerStatus(status);
     });
 }
 
@@ -222,7 +248,10 @@ async function saveFavorites() {
 function setupEventListeners() {
     elements.loadUrlBtn.addEventListener('click', loadM3uFromUrl);
     elements.savedUrlsBtn.addEventListener('click', showSavedUrlsModal);
+    elements.serverToggleBtn.addEventListener('click', showServerModal);
     elements.closeModal.addEventListener('click', closeSavedUrlsModal);
+    elements.closeServerModal.addEventListener('click', closeServerModal);
+    elements.toggleServerBtn.addEventListener('click', toggleServer);
     elements.urlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') loadM3uFromUrl();
     });
@@ -234,6 +263,12 @@ function setupEventListeners() {
     elements.savedUrlsModal.addEventListener('click', (e) => {
         if (e.target === elements.savedUrlsModal) {
             closeSavedUrlsModal();
+        }
+    });
+    
+    elements.serverModal.addEventListener('click', (e) => {
+        if (e.target === elements.serverModal) {
+            closeServerModal();
         }
     });
     
@@ -335,6 +370,9 @@ function parseM3u(content) {
         if (lastLoadedUrl) {
             autoSaveUrl(lastLoadedUrl);
         }
+        
+        // Compartilhar canais com servidor
+        shareChannelsWithServer();
         
         renderChannels();
         updateCounts();
@@ -734,6 +772,110 @@ function escapeHtml(text) {
     };
     return text.replace(/[&<>"']/g, m => map[m]);
 }
+
+// ========== SERVIDOR WEB ==========
+
+// Compartilhar canais com servidor
+async function shareChannelsWithServer() {
+    try {
+        await ipcRenderer.invoke('share-channels', channels);
+    } catch (error) {
+        console.error('Erro ao compartilhar canais com servidor:', error);
+    }
+}
+
+// Carregar status do servidor
+async function loadServerStatus() {
+    try {
+        const status = await ipcRenderer.invoke('get-server-status');
+        updateServerStatus(status);
+    } catch (error) {
+        console.error('Erro ao carregar status do servidor:', error);
+    }
+}
+
+// Mostrar modal do servidor
+function showServerModal() {
+    elements.serverModal.style.display = 'flex';
+    loadServerStatus();
+}
+
+// Fechar modal do servidor
+function closeServerModal() {
+    elements.serverModal.style.display = 'none';
+}
+
+// Toggle servidor
+async function toggleServer() {
+    try {
+        if (serverRunning) {
+            // Parar servidor
+            const result = await ipcRenderer.invoke('stop-server');
+            if (result.success) {
+                showNotification('Servidor parado com sucesso', 'success');
+            } else {
+                showNotification('Erro ao parar servidor: ' + (result.error || result.message), 'error');
+            }
+        } else {
+            // Iniciar servidor
+            const result = await ipcRenderer.invoke('start-server');
+            if (result.success) {
+                showNotification(`Servidor iniciado em http://${result.ip}:${result.port}`, 'success');
+            } else {
+                showNotification('Erro ao iniciar servidor: ' + (result.error || result.message), 'error');
+            }
+        }
+    } catch (error) {
+        showNotification('Erro ao controlar servidor: ' + error.message, 'error');
+    }
+}
+
+// Atualizar UI com status do servidor
+function updateServerStatus(status) {
+    serverRunning = status.running;
+    
+    // Atualizar badge do botão
+    if (serverRunning) {
+        elements.serverToggleBtn.classList.add('active');
+        elements.serverStatus.textContent = 'Servidor Ativo';
+        elements.serverBadge.classList.add('active');
+        elements.statusText.textContent = 'Ativo';
+        elements.toggleServerBtn.textContent = 'Desativar Servidor';
+        elements.toggleServerBtn.classList.remove('btn-primary');
+        elements.toggleServerBtn.classList.add('btn-large', 'btn-danger');
+        
+        // Mostrar informações do servidor
+        const url = `http://${status.ip}:${status.port}`;
+        elements.serverUrl.value = url;
+        elements.serverIp.textContent = status.ip;
+        elements.serverPort.textContent = status.port;
+        elements.serverInfo.style.display = 'block';
+    } else {
+        elements.serverToggleBtn.classList.remove('active');
+        elements.serverStatus.textContent = 'Servidor';
+        elements.serverBadge.classList.remove('active');
+        elements.statusText.textContent = 'Desativado';
+        elements.toggleServerBtn.textContent = 'Ativar Servidor';
+        elements.toggleServerBtn.classList.add('btn-primary');
+        elements.toggleServerBtn.classList.remove('btn-danger');
+        
+        // Ocultar informações do servidor
+        elements.serverInfo.style.display = 'none';
+    }
+}
+
+// Copiar URL do servidor
+function copyServerUrl() {
+    const url = elements.serverUrl.value;
+    navigator.clipboard.writeText(url).then(() => {
+        showNotification('URL copiada para a área de transferência', 'success');
+    }).catch(err => {
+        showNotification('Erro ao copiar URL', 'error');
+    });
+}
+
+// Expor função para uso no HTML
+window.copyServerUrl = copyServerUrl;
 
 // Inicializar app
 init();

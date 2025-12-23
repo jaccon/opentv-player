@@ -1,8 +1,15 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const express = require('express');
+const cors = require('cors');
+const os = require('os');
 
 let mainWindow;
+let httpServer = null;
+let serverApp = null;
+let serverRunning = false;
+const SERVER_PORT = 2323;
 
 // Caminhos para armazenar dados
 const favoritesPath = path.join(app.getPath('userData'), 'favorites.json');
@@ -83,6 +90,18 @@ function createWindow() {
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'Tela Cheia' }
       ]
+    },
+    {
+      label: 'Servidor',
+      submenu: [
+        {
+          label: 'Ativar Modo Servidor',
+          id: 'toggle-server',
+          click: () => {
+            mainWindow.webContents.send('toggle-server');
+          }
+        }
+      ]
     }
   ];
 
@@ -161,11 +180,27 @@ ipcMain.handle('select-file', async () => {
 // IPC Handlers para gerenciar URLs salvas
 ipcMain.handle('load-saved-urls', async () => {
   try {
+    let urls = [];
     if (fs.existsSync(savedUrlsPath)) {
       const data = fs.readFileSync(savedUrlsPath, 'utf-8');
-      return JSON.parse(data);
+      urls = JSON.parse(data);
     }
-    return [];
+    
+    // Adicionar URL padrão se não existir
+    const defaultUrl = 'https://iptv-org.github.io/iptv/index.m3u';
+    const defaultExists = urls.some(u => u.url === defaultUrl);
+    
+    if (!defaultExists) {
+      const defaultUrlData = {
+        url: defaultUrl,
+        name: 'IPTV-ORG - Canais Globais',
+        date: new Date().toISOString()
+      };
+      urls.push(defaultUrlData);
+      fs.writeFileSync(savedUrlsPath, JSON.stringify(urls, null, 2));
+    }
+    
+    return urls;
   } catch (error) {
     console.error('Erro ao carregar URLs:', error);
     return [];
@@ -209,3 +244,179 @@ ipcMain.handle('delete-saved-url', async (event, url) => {
     return { success: false, error: error.message };
   }
 });
+
+// Função para obter IP local
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Pular endereços internos e não IPv4
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+// Função para criar servidor HTTP
+function createHttpServer() {
+  if (serverApp) return;
+
+  serverApp = express();
+  serverApp.use(cors());
+  serverApp.use(express.json());
+
+  // Servir página web pública
+  serverApp.use(express.static(path.join(__dirname, 'public')));
+
+  // API: Obter lista de canais
+  serverApp.get('/api/channels', (req, res) => {
+    try {
+      const channelsData = global.sharedChannels || [];
+      res.json({ success: true, channels: channelsData });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  });
+
+  // API: Obter favoritos
+  serverApp.get('/api/favorites', async (req, res) => {
+    try {
+      if (fs.existsSync(favoritesPath)) {
+        const data = fs.readFileSync(favoritesPath, 'utf-8');
+        res.json({ success: true, favorites: JSON.parse(data) });
+      } else {
+        res.json({ success: true, favorites: [] });
+      }
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  });
+
+  // API: Adicionar/remover favorito
+  serverApp.post('/api/favorites', async (req, res) => {
+    try {
+      const { channel, action } = req.body;
+      let favorites = [];
+      
+      if (fs.existsSync(favoritesPath)) {
+        const data = fs.readFileSync(favoritesPath, 'utf-8');
+        favorites = JSON.parse(data);
+      }
+
+      if (action === 'add') {
+        const exists = favorites.some(fav => fav.url === channel.url);
+        if (!exists) {
+          favorites.push(channel);
+        }
+      } else if (action === 'remove') {
+        favorites = favorites.filter(fav => fav.url !== channel.url);
+      }
+
+      fs.writeFileSync(favoritesPath, JSON.stringify(favorites, null, 2));
+      res.json({ success: true, favorites });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  });
+
+  // API: Status do servidor
+  serverApp.get('/api/status', (req, res) => {
+    res.json({
+      success: true,
+      status: 'running',
+      version: '1.0.1',
+      ip: getLocalIP(),
+      port: SERVER_PORT
+    });
+  });
+}
+
+// Iniciar servidor HTTP
+function startHttpServer() {
+  if (serverRunning) {
+    return { success: false, message: 'Servidor já está rodando' };
+  }
+
+  try {
+    createHttpServer();
+    httpServer = serverApp.listen(SERVER_PORT, '0.0.0.0', () => {
+      const ip = getLocalIP();
+      serverRunning = true;
+      console.log(`Servidor HTTP rodando em http://${ip}:${SERVER_PORT}`);
+      
+      // Notificar janela principal
+      if (mainWindow) {
+        mainWindow.webContents.send('server-status-changed', {
+          running: true,
+          ip,
+          port: SERVER_PORT
+        });
+      }
+    });
+
+    return { success: true, ip: getLocalIP(), port: SERVER_PORT };
+  } catch (error) {
+    console.error('Erro ao iniciar servidor:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Parar servidor HTTP
+function stopHttpServer() {
+  if (!serverRunning || !httpServer) {
+    return { success: false, message: 'Servidor não está rodando' };
+  }
+
+  try {
+    httpServer.close(() => {
+      serverRunning = false;
+      console.log('Servidor HTTP parado');
+      
+      // Notificar janela principal
+      if (mainWindow) {
+        mainWindow.webContents.send('server-status-changed', {
+          running: false
+        });
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao parar servidor:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// IPC Handlers para controlar servidor
+ipcMain.handle('start-server', async () => {
+  return startHttpServer();
+});
+
+ipcMain.handle('stop-server', async () => {
+  return stopHttpServer();
+});
+
+ipcMain.handle('get-server-status', async () => {
+  return {
+    running: serverRunning,
+    ip: getLocalIP(),
+    port: SERVER_PORT
+  };
+});
+
+// Parar servidor ao fechar app
+app.on('before-quit', () => {
+  if (httpServer) {
+    httpServer.close();
+  }
+});
+
+// IPC Handler para compartilhar canais com servidor
+ipcMain.handle('share-channels', async (event, channelsData) => {
+  // Armazenar canais em memória global para o servidor
+  global.sharedChannels = channelsData;
+  return { success: true };
+});
+

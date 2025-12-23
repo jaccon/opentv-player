@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenTV Player - Acesso Web</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .player-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #videoPlayer {
+            width: 100%;
+            max-height: 500px;
+            display: block;
+        }
+
+        .player-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.8);
+            font-size: 1.5em;
+        }
+
+        .current-channel {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .current-channel.active {
+            display: block;
+        }
+
+        .current-channel h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+
+        .current-channel-group {
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .channels-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: #fff;
+        }
+
+        .search-box {
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .channel-group {
+            margin-bottom: 20px;
+        }
+
+        .group-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .channel-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .channel-item.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-left: 4px solid #fff;
+        }
+
+        .channel-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+
+        .channel-logo-placeholder {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            font-size: 1.5em;
+        }
+
+        .channel-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .btn-fav {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+
+        .btn-fav:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-fav.active {
+            background: rgba(255, 215, 0, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📺 OpenTV Player</h1>
+            <p class="subtitle">
+                <span class="status-indicator"></span>
+                Acesso Web - Assista seus canais de qualquer dispositivo
+            </p>
+        </header>
+
+        <div class="main-content">
+            <div class="player-section">
+                <div class="video-container">
+                    <video id="videoPlayer" controls></video>
+                    <div id="playerOverlay" class="player-overlay">
+                        Selecione um canal para começar
+                    </div>
+                </div>
+
+                <div id="currentChannel" class="current-channel">
+                    <h3 id="currentChannelName">-</h3>
+                    <div class="current-channel-group" id="currentChannelGroup">-</div>
+                </div>
+            </div>
+
+            <div class="channels-section">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">
+                        Todos (<span id="allCount">0</span>)
+                    </button>
+                    <button class="tab-btn" data-tab="favorites" onclick="switchTab('favorites')">
+                        ⭐ Favoritos (<span id="favCount">0</span>)
+                    </button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Buscar canal ou grupo...">
+                </div>
+
+                <div id="channelsList">
+                    <div class="loading">Carregando canais...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let channels = [];
+        let favorites = [];
+        let currentChannel = null;
+        let currentTab = 'all';
+        let hls = null;
+
+        const elements = {
+            searchInput: document.getElementById('searchInput'),
+            channelsList: document.getElementById('channelsList'),
+            videoPlayer: document.getElementById('videoPlayer'),
+            playerOverlay: document.getElementById('playerOverlay'),
+            currentChannel: document.getElementById('currentChannel'),
+            currentChannelName: document.getElementById('currentChannelName'),
+            currentChannelGroup: document.getElementById('currentChannelGroup'),
+            allCount: document.getElementById('allCount'),
+            favCount: document.getElementById('favCount')
+        };
+
+        // Carregar dados iniciais
+        async function init() {
+            await loadChannels();
+            await loadFavorites();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            elements.searchInput.addEventListener('input', filterChannels);
+            elements.videoPlayer.addEventListener('loadeddata', handleLoadSuccess);
+            elements.videoPlayer.addEventListener('error', handleLoadError);
+        }
+
+        async function loadChannels() {
+            try {
+                const response = await fetch('/api/channels');
+                const data = await response.json();
+                if (data.success) {
+                    channels = data.channels || [];
+                    renderChannels();
+                    updateCounts();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar canais:', error);
+                elements.channelsList.innerHTML = '<div class="empty-state">Erro ao carregar canais</div>';
+            }
+        }
+
+        async function loadFavorites() {
+            try {
+                const response = await fetch('/api/favorites');
+                const data = await response.json();
+                if (data.success) {
+                    favorites = data.favorites || [];
+                    updateCounts();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar favoritos:', error);
+            }
+        }
+
+        function renderChannels() {
+            const searchTerm = elements.searchInput.value.toLowerCase();
+            let filteredChannels = channels;
+
+            if (searchTerm) {
+                filteredChannels = channels.filter(ch =>
+                    ch.name.toLowerCase().includes(searchTerm) ||
+                    ch.group.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (currentTab === 'favorites') {
+                filteredChannels = filteredChannels.filter(ch =>
+                    favorites.some(fav => fav.url === ch.url)
+                );
+            }
+
+            if (filteredChannels.length === 0) {
+                elements.channelsList.innerHTML = '<div class="empty-state">😕 Nenhum canal encontrado</div>';
+                return;
+            }
+
+            const grouped = filteredChannels.reduce((acc, channel) => {
+                if (!acc[channel.group]) {
+                    acc[channel.group] = [];
+                }
+                acc[channel.group].push(channel);
+                return acc;
+            }, {});
+
+            let html = '';
+            Object.keys(grouped).sort().forEach(group => {
+                html += `<div class="channel-group">
+                    <div class="group-header">${escapeHtml(group)} (${grouped[group].length})</div>`;
+
+                grouped[group].forEach(channel => {
+                    const isFavorite = favorites.some(fav => fav.url === channel.url);
+                    const isActive = currentChannel && currentChannel.url === channel.url;
+
+                    html += `
+                        <div class="channel-item ${isActive ? 'active' : ''}" onclick="playChannel(${channel.id})">
+                            ${channel.logo ?
+                                `<img src="${channel.logo}" alt="" class="channel-logo" onerror="this.style.display='none'">` :
+                                '<div class="channel-logo-placeholder">📺</div>'
+                            }
+                            <div class="channel-name">${escapeHtml(channel.name)}</div>
+                            <button class="btn-fav ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${channel.id}, event)">
+                                ${isFavorite ? '⭐' : '☆'}
+                            </button>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            elements.channelsList.innerHTML = html;
+        }
+
+        function playChannel(channelId) {
+            const channel = channels[channelId];
+            if (!channel) return;
+
+            currentChannel = channel;
+            elements.playerOverlay.style.display = 'flex';
+            elements.playerOverlay.textContent = 'Carregando...';
+
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            elements.videoPlayer.pause();
+            elements.videoPlayer.removeAttribute('src');
+            elements.videoPlayer.load();
+
+            if (typeof Hls !== 'undefined' && (channel.url.includes('.m3u8') || channel.url.includes('m3u8'))) {
+                if (Hls.isSupported()) {
+                    hls = new Hls({
+                        enableWorker: true,
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 60
+                    });
+
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        elements.videoPlayer.play().catch(err => console.error('Play error:', err));
+                    });
+
+                    hls.on(Hls.Events.ERROR, (event, data) => {
+                        if (data.fatal) {
+                            handleLoadError(new Event('error'));
+                        }
+                    });
+
+                    hls.loadSource(channel.url);
+                    hls.attachMedia(elements.videoPlayer);
+                } else if (elements.videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    elements.videoPlayer.src = channel.url;
+                    elements.videoPlayer.play().catch(err => console.error('Play error:', err));
+                }
+            } else {
+                elements.videoPlayer.src = channel.url;
+                elements.videoPlayer.load();
+                elements.videoPlayer.play().catch(err => console.error('Play error:', err));
+            }
+
+            updateChannelInfo();
+            renderChannels();
+        }
+
+        function handleLoadSuccess() {
+            elements.playerOverlay.style.display = 'none';
+            elements.currentChannel.classList.add('active');
+        }
+
+        function handleLoadError() {
+            elements.playerOverlay.textContent = 'Erro ao carregar stream';
+        }
+
+        function updateChannelInfo() {
+            if (currentChannel) {
+                elements.currentChannelName.textContent = currentChannel.name;
+                elements.currentChannelGroup.textContent = currentChannel.group;
+            }
+        }
+
+        async function toggleFavorite(channelId, event) {
+            event.stopPropagation();
+
+            const channel = channels[channelId];
+            const isFavorite = favorites.some(fav => fav.url === channel.url);
+            const action = isFavorite ? 'remove' : 'add';
+
+            try {
+                const response = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel, action })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    favorites = data.favorites;
+                    updateCounts();
+                    renderChannels();
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar favorito:', error);
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            renderChannels();
+        }
+
+        function filterChannels() {
+            renderChannels();
+        }
+
+        function updateCounts() {
+            elements.allCount.textContent = channels.length;
+            elements.favCount.textContent = favorites.length;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        init();
+    </script>
+</body>
+</html>

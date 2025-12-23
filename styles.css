@@ -720,6 +720,159 @@ Modal */
     border-left-color: var(--accent-primary);
 }
 
+/* Server Modal Styles */
+.btn-server {
+    position: relative;
+}
+
+.btn-server.active {
+    background: var(--success);
+}
+
+.btn-server.active:hover {
+    background: #45a049;
+}
+
+.server-modal .modal-content {
+    max-width: 600px;
+}
+
+.server-status-container {
+    padding: 10px;
+}
+
+.server-status-info {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.server-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: var(--bg-tertiary);
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+
+.server-status-badge.active {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--success);
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #666;
+}
+
+.server-status-badge.active .status-dot {
+    background: var(--success);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.server-description {
+    color: var(--text-secondary);
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.server-info {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.info-card {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.info-card:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.info-value {
+    font-size: 1.1em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.server-url-input {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95em;
+}
+
+.btn-copy {
+    padding: 10px 15px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-copy:hover {
+    background: var(--bg-hover);
+}
+
+.server-qr {
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.server-actions {
+    text-align: center;
+}
+
+.btn-large {
+    padding: 15px 40px;
+    font-size: 1.1em;
+    min-width: 200px;
+}
+
+.btn-large.btn-danger {
+    background: var(--error);
+}
+
+.btn-large.btn-danger:hover {
+    background: #d32f2f;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .sidebar {
