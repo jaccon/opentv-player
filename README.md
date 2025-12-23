@@ -1,15 +1,22 @@
 # 📺 IPTV Player
 
-Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de favoritos e tratamento robusto de erros.
+Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de favoritos e modo servidor web.
+
+## ⚠️ Aviso para Usuários Windows
+
+**Antivírus podem bloquear o executável** - Isso é um falso positivo comum. A aplicação é segura e open-source.
+📖 **[Leia aqui como resolver](WINDOWS-ANTIVIRUS.md)**
 
 ## ✨ Características
 
 - 🎥 **Reprodução de IPTV** - Suporta streams M3U/M3U8 via URL ou arquivo local
+- 🌐 **Modo Servidor Web** - Acesse seus canais de qualquer dispositivo na rede (porta 2323)
 - ⭐ **Sistema de Favoritos** - Marque seus canais favoritos para acesso rápido
 - 🔍 **Busca Inteligente** - Encontre canais por nome ou grupo
 - 🎨 **Interface Moderna** - Design clean e responsivo com tema escuro
 - 💪 **Tratamento de Erros** - Sistema de retry automático e mensagens claras
 - 📊 **Organização por Grupos** - Canais organizados automaticamente por categoria
+- 📱 **Acesso Remoto** - Interface web responsiva para mobile, tablet e desktop
 - 🚀 **Performance** - Aplicação leve e otimizada
 
 ## 🚀 Como Usar
@@ -41,9 +48,30 @@ npm start
 - **Buscar:** Use o campo de busca para filtrar canais
 - **Ver Favoritos:** Clique na aba "⭐ Favoritos"
 
+### Modo Servidor (Novo! v0.2.0)
+
+1. **Ativar Servidor:**
+   - Clique no botão "🌐 Servidor" no cabeçalho, OU
+   - Use o menu: Servidor > Ativar Modo Servidor
+   - Clique em "Ativar Servidor"
+
+2. **Acessar de Outros Dispositivos:**
+   - Anote o endereço mostrado (ex: `http://192.168.1.100:2323`)
+   - Abra este endereço no navegador de qualquer dispositivo na mesma rede
+   - Funciona em smartphones, tablets, smart TVs, computadores, etc.
+
+3. **Recursos do Modo Servidor:**
+   - Interface web responsiva e moderna
+   - Lista completa de canais sincronizada
+   - Sistema de favoritos compartilhado
+   - Reprodução com HLS.js
+   - Acesso simultâneo de múltiplos dispositivos
+
 ## 🛠️ Tecnologias
 
 - **Electron** - Framework para aplicações desktop
+- **Express.js** - Servidor HTTP integrado
+- **HLS.js** - Reprodução de streams HLS
 - **HTML5 Video** - Reprodução nativa de streams
 - **JavaScript** - Lógica da aplicação
 - **CSS3** - Interface moderna e responsiva
