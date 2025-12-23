@@ -89,7 +89,7 @@ function createWindow() {
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('app.html');
 
   // Descomentar para debug
   // mainWindow.webContents.openDevTools();
