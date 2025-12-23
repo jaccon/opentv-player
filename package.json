@@ -46,28 +46,24 @@
           "arch": ["x64", "arm64"]
         }
       ],
-      "icon": "build/icon.ico",
       "publisherName": "OpenTV Team",
       "verifyUpdateCodeSignature": false,
       "requestedExecutionLevel": "asInvoker",
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
-      "nsis": {
-        "oneClick": false,
-        "allowToChangeInstallationDirectory": true,
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true,
-        "shortcutName": "OpenTV Player",
-        "installerIcon": "build/icon.ico",
-        "uninstallerIcon": "build/icon.ico",
-        "installerHeaderIcon": "build/icon.ico",
-        "deleteAppDataOnUninstall": false,
-        "displayLanguageSelector": false,
-        "allowElevation": true,
-        "perMachine": false
-      },
-      "portable": {
-        "artifactName": "${productName}-${version}-${arch}-Portable.${ext}"
-      }
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OpenTV Player",
+      "deleteAppDataOnUninstall": false,
+      "displayLanguageSelector": false,
+      "allowElevation": true,
+      "perMachine": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-${arch}-Portable.${ext}"
     },
     "linux": {
       "target": [
