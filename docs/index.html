@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OpenTV Player - Aplicação leve e moderna para visualizar canais IPTV com sistema de favoritos">
+    <title>OpenTV Player - IPTV Player Moderno</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2d2d2d;
+            --accent: #667eea;
+            --accent-light: #764ba2;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --error: #f44336;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 120px 0 80px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.1), transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(118, 75, 162, 0.1), transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .hero-text {
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .hero-text h1 {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-text p {
+            font-size: 22px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-image {
+            position: relative;
+            width: 100%;
+            max-width: 1400px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .screenshot {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8),
+                        0 0 0 1px rgba(102, 126, 234, 0.3),
+                        0 0 80px rgba(102, 126, 234, 0.2);
+            transition: all 0.5s ease;
+            display: block;
+        }
+
+        .screenshot:hover {
+            transform: scale(1.02) translateY(-10px);
+            box-shadow: 0 50px 120px rgba(0, 0, 0, 0.9),
+                        0 0 0 2px rgba(102, 126, 234, 0.5),
+                        0 0 120px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+            background: var(--bg-secondary);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .section-title p {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .feature-card {
+            background: var(--bg-tertiary);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* How it Works */
+        .how-it-works {
+            padding: 100px 0;
+            background: var(--bg-primary);
+        }
+
+        .steps {
+            display: grid;
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 18px;
+            line-height: 1.8;
+        }
+
+        /* Download Section */
+        .download-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+            text-align: center;
+        }
+
+        .download-section h2 {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+
+        .download-section p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .platforms {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .platform {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 0 30px;
+            background: var(--bg-secondary);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-text h1 {
+                font-size: 36px;
+            }
+
+            .hero-text p {
+                font-size: 18px;
+            }
+
+            .screenshot {
+                border-radius: 12px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .step {
+                grid-template-columns: 1fr;
+            }
+
+            .step-number {
+                margin: 0 auto;
+            }
+
+            .container {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="icon.svg" alt="OpenTV">
+                    <span>OpenTV Player</span>
+                </div>
+                <nav class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#how-it-works">Como Funciona</a>
+                    <a href="#download">Download</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Assista IPTV com Estilo</h1>
+                    <p>Player moderno e leve para visualizar seus canais IPTV favoritos. Interface elegante, favoritos inteligentes e sem complicações.</p>
+                    <div class="cta-buttons">
+                        <a href="https://github.com/jaccon/opentv-player/releases" class="btn btn-primary">
+                            <span>⬇️</span>
+                            Download Grátis
+                        </a>
+                        <a href="https://github.com/jaccon/opentv-player" class="btn btn-secondary">
+                            <span>⭐</span>
+                            Ver no GitHub
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="screenshot.jpg" alt="OpenTV Player Screenshot" class="screenshot">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Features Poderosas</h2>
+                <p>Tudo que você precisa em um player IPTV moderno</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📡</div>
+                    <h3>Suporte M3U/M3U8</h3>
+                    <p>Carregue playlists de arquivos locais ou URLs remotas. Suporte completo para streams HLS com HLS.js integrado.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⭐</div>
+                    <h3>Sistema de Favoritos</h3>
+                    <p>Marque seus canais preferidos e acesse rapidamente. Favoritos sincronizados e salvos automaticamente.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Busca Inteligente</h3>
+                    <p>Encontre canais instantaneamente por nome ou categoria. Busca em tempo real enquanto você digita.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Organização Automática</h3>
+                    <p>Canais organizados por grupos automaticamente. Interface limpa e fácil de navegar.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Recuperação Automática</h3>
+                    <p>Retry inteligente em caso de falhas. Até 3 tentativas automáticas com mensagens claras de erro.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Histórico de URLs</h3>
+                    <p>URLs salvas automaticamente ao carregar. Acesse suas playlists favoritas com um clique.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>Como Funciona</h2>
+                <p>Simples e direto ao ponto</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Baixe e Instale</h3>
+                        <p>Faça download do instalador DMG para Mac. Arraste para a pasta Applications e pronto! Também disponível versões para Windows e Linux.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Adicione sua Playlist</h3>
+                        <p>Cole a URL da sua playlist M3U/M3U8 ou carregue um arquivo local através do menu Arquivo → Carregar M3U. A URL será salva automaticamente no histórico.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Assista e Organize</h3>
+                        <p>Navegue pelos canais organizados por categoria, use a busca para encontrar rapidamente e adicione seus favoritos. Tudo sincronizado automaticamente!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section class="download-section" id="download">
+        <div class="container">
+            <h2>Pronto para Começar?</h2>
+            <p>Baixe agora e transforme sua experiência de assistir IPTV</p>
+            <a href="https://github.com/jaccon/opentv-player/releases" class="btn btn-primary" style="background: white; color: var(--accent); font-size: 18px; padding: 20px 40px;">
+                <span>⬇️</span>
+                Baixar OpenTV Player
+            </a>
+            <div class="platforms">
+                <div class="platform">
+                    <strong>🍎 macOS</strong><br>
+                    Apple Silicon & Intel
+                </div>
+                <div class="platform">
+                    <strong>🪟 Windows</strong><br>
+                    64-bit
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/jaccon/opentv-player">GitHub</a>
+                <a href="https://github.com/jaccon/opentv-player/issues">Reportar Bug</a>
+                <a href="https://github.com/jaccon/opentv-player/blob/main/README.md">Documentação</a>
+            </div>
+            <p class="footer-text">
+                OpenTV Player - Open Source IPTV Player<br>
+                Desenvolvido com ❤️ usando Electron
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
