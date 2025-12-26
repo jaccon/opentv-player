@@ -12,7 +12,8 @@ Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de f
 - 🎥 **Reprodução de IPTV** - Suporta streams M3U/M3U8 via URL ou arquivo local
 - 🌐 **Modo Servidor Web** - Acesse seus canais de qualquer dispositivo na rede (porta 2323)
 - ⭐ **Sistema de Favoritos** - Marque seus canais favoritos para acesso rápido
-- 🔍 **Busca Inteligente** - Encontre canais por nome ou grupo
+- � **Exportar/Importar Favoritos** - Compartilhe listas de favoritos com outros usuários
+- �🔍 **Busca Inteligente** - Encontre canais por nome ou grupo
 - 🎨 **Interface Moderna** - Design clean e responsivo com tema escuro
 - 💪 **Tratamento de Erros** - Sistema de retry automático e mensagens claras
 - 📊 **Organização por Grupos** - Canais organizados automaticamente por categoria
@@ -47,6 +48,9 @@ npm start
 - **Favoritar:** Clique na estrela (☆) ao lado do canal ou no botão grande durante a reprodução
 - **Buscar:** Use o campo de busca para filtrar canais
 - **Ver Favoritos:** Clique na aba "⭐ Favoritos"
+- **Exportar Favoritos:** Na aba Favoritos, clique em "📤 Exportar" para salvar seus favoritos em um arquivo JSON
+- **Importar Favoritos:** Na aba Favoritos, clique em "📥 Importar" para adicionar favoritos de um arquivo JSON
+  - 📖 **[Saiba mais sobre Exportar/Importar Favoritos](EXPORTAR-FAVORITOS.md)**
 
 ### Modo Servidor (Novo! v0.2.0)
 

@@ -46,7 +46,10 @@ const elements = {
     favoriteIcon: document.getElementById('favoriteIcon'),
     allCount: document.getElementById('allCount'),
     favCount: document.getElementById('favCount'),
-    tabBtns: document.querySelectorAll('.tab-btn')
+    tabBtns: document.querySelectorAll('.tab-btn'),
+    exportFavoritesBtn: document.getElementById('exportFavoritesBtn'),
+    importFavoritesBtn: document.getElementById('importFavoritesBtn'),
+    favoritesActions: document.getElementById('favoritesActions')
 };
 
 // Estado do servidor
@@ -244,6 +247,54 @@ async function saveFavorites() {
     }
 }
 
+// Exportar favoritos
+async function exportFavorites() {
+    if (favorites.length === 0) {
+        showNotification('Nenhum favorito para exportar', 'warning');
+        return;
+    }
+
+    try {
+        const result = await ipcRenderer.invoke('export-favorites');
+        
+        if (result.success) {
+            showNotification(`✅ ${result.count} favoritos exportados com sucesso!`, 'success');
+        } else if (!result.canceled) {
+            showNotification('Erro ao exportar favoritos: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao exportar favoritos:', error);
+        showNotification('Erro ao exportar favoritos: ' + error.message, 'error');
+    }
+}
+
+// Importar favoritos
+async function importFavorites() {
+    try {
+        const result = await ipcRenderer.invoke('import-favorites');
+        
+        if (result.success) {
+            favorites = result.favorites;
+            updateCounts();
+            
+            if (currentTab === 'favorites') {
+                renderChannels();
+            }
+            
+            const message = result.added > 0 
+                ? `✅ ${result.added} novos favoritos adicionados! Total: ${result.total}`
+                : `ℹ️ ${result.imported} favoritos já existiam. Total: ${result.total}`;
+            
+            showNotification(message, 'success');
+        } else if (!result.canceled) {
+            showNotification('Erro ao importar favoritos: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao importar favoritos:', error);
+        showNotification('Erro ao importar favoritos: ' + error.message, 'error');
+    }
+}
+
 // Event Listeners
 function setupEventListeners() {
     elements.loadUrlBtn.addEventListener('click', loadM3uFromUrl);
@@ -252,6 +303,8 @@ function setupEventListeners() {
     elements.closeModal.addEventListener('click', closeSavedUrlsModal);
     elements.closeServerModal.addEventListener('click', closeServerModal);
     elements.toggleServerBtn.addEventListener('click', toggleServer);
+    elements.exportFavoritesBtn.addEventListener('click', exportFavorites);
+    elements.importFavoritesBtn.addEventListener('click', importFavorites);
     elements.urlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') loadM3uFromUrl();
     });
@@ -732,6 +785,11 @@ function switchTab(tab) {
     elements.tabBtns.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
     });
+    
+    // Mostrar/ocultar botões de exportar/importar
+    if (elements.favoritesActions) {
+        elements.favoritesActions.style.display = tab === 'favorites' ? 'flex' : 'none';
+    }
     
     renderChannels();
 }

@@ -1,8 +1,8 @@
 {
   "name": "opentv-player",
   "productName": "OpenTV Player",
-  "version": "0.3.0",
-  "description": "Aplicação leve para visualizar IPTV com sistema de favoritos e modo servidor",
+  "version": "0.4.0",
+  "description": "Aplicação leve para visualizar IPTV com sistema de favoritos, modo servidor e compartilhamento de listas",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

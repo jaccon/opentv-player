@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "app": "OpenTV Player",
+  "exportDate": "2025-12-26T00:00:00.000Z",
+  "totalChannels": 5,
+  "favorites": [
+    {
+      "name": "CNN International",
+      "url": "https://cnn-cnninternational-1-eu.rakuten.wurl.tv/playlist.m3u8",
+      "group": "News",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/6/66/CNN_International_logo.svg"
+    },
+    {
+      "name": "Bloomberg TV",
+      "url": "https://bloomberg-bloomberg-1-eu.rakuten.wurl.tv/playlist.m3u8",
+      "group": "News",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/5/5d/New_Bloomberg_Logo.svg"
+    },
+    {
+      "name": "NASA TV",
+      "url": "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8",
+      "group": "Educational",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg"
+    },
+    {
+      "name": "Al Jazeera English",
+      "url": "https://live-hls-web-aje.getaj.net/AJE/index.m3u8",
+      "group": "News",
+      "logo": "https://upload.wikimedia.org/wikipedia/en/f/f2/Aljazeera_eng.svg"
+    },
+    {
+      "name": "Red Bull TV",
+      "url": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
+      "group": "Sports",
+      "logo": "https://upload.wikimedia.org/wikipedia/en/9/94/Red_Bull_TV_logo.svg"
+    }
+  ]
+}

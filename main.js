@@ -156,6 +156,114 @@ ipcMain.handle('save-favorites', async (event, favorites) => {
   }
 });
 
+// IPC Handler para exportar favoritos
+ipcMain.handle('export-favorites', async () => {
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Exportar Favoritos',
+      defaultPath: `favoritos-opentv-${new Date().toISOString().split('T')[0]}.json`,
+      filters: [
+        { name: 'JSON', extensions: ['json'] },
+        { name: 'Todos os arquivos', extensions: ['*'] }
+      ]
+    });
+
+    if (!result.canceled && result.filePath) {
+      // Ler favoritos atuais
+      let favorites = [];
+      if (fs.existsSync(favoritesPath)) {
+        const data = fs.readFileSync(favoritesPath, 'utf-8');
+        favorites = JSON.parse(data);
+      }
+
+      // Criar estrutura de exportação com metadados
+      const exportData = {
+        version: '1.0',
+        app: 'OpenTV Player',
+        exportDate: new Date().toISOString(),
+        totalChannels: favorites.length,
+        favorites: favorites
+      };
+
+      // Salvar no arquivo escolhido
+      fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2));
+      return { success: true, path: result.filePath, count: favorites.length };
+    }
+
+    return { success: false, canceled: true };
+  } catch (error) {
+    console.error('Erro ao exportar favoritos:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// IPC Handler para importar favoritos
+ipcMain.handle('import-favorites', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Importar Favoritos',
+      properties: ['openFile'],
+      filters: [
+        { name: 'JSON', extensions: ['json'] },
+        { name: 'Todos os arquivos', extensions: ['*'] }
+      ]
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      const content = fs.readFileSync(result.filePaths[0], 'utf-8');
+      const importData = JSON.parse(content);
+
+      // Verificar se é um arquivo válido de favoritos
+      let importedFavorites = [];
+      
+      if (importData.favorites && Array.isArray(importData.favorites)) {
+        // Formato novo com metadados
+        importedFavorites = importData.favorites;
+      } else if (Array.isArray(importData)) {
+        // Formato antigo (apenas array de canais)
+        importedFavorites = importData;
+      } else {
+        return { success: false, error: 'Formato de arquivo inválido' };
+      }
+
+      // Carregar favoritos existentes
+      let currentFavorites = [];
+      if (fs.existsSync(favoritesPath)) {
+        const data = fs.readFileSync(favoritesPath, 'utf-8');
+        currentFavorites = JSON.parse(data);
+      }
+
+      // Mesclar favoritos (evitar duplicatas por URL)
+      const mergedFavorites = [...currentFavorites];
+      let addedCount = 0;
+
+      importedFavorites.forEach(importedFav => {
+        const exists = mergedFavorites.some(fav => fav.url === importedFav.url);
+        if (!exists) {
+          mergedFavorites.push(importedFav);
+          addedCount++;
+        }
+      });
+
+      // Salvar favoritos mesclados
+      fs.writeFileSync(favoritesPath, JSON.stringify(mergedFavorites, null, 2));
+
+      return { 
+        success: true, 
+        favorites: mergedFavorites,
+        imported: importedFavorites.length,
+        added: addedCount,
+        total: mergedFavorites.length
+      };
+    }
+
+    return { success: false, canceled: true };
+  } catch (error) {
+    console.error('Erro ao importar favoritos:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('select-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
