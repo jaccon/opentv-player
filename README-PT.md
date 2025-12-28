@@ -1,10 +1,11 @@
 # 📺 IPTV Player
 
-Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de favoritos e tratamento robusto de erros.
+Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de favoritos, modo servidor e suporte a Chromecast.
 
 ## ✨ Características
 
 - 📡 **Suporte M3U/M3U8**: Carregue playlists locais ou via URL
+- 🎬 **Reprodução de Vídeos Locais**: Abra arquivos MP4, OGV, WebM, MKV, AVI, MOV
 - ⭐ **Sistema de Favoritos**: Marque seus canais preferidos para acesso rápido
 - 🔍 **Busca Inteligente**: Encontre canais por nome ou grupo
 - 📊 **Organização por Grupos**: Canais organizados automaticamente por categoria
@@ -12,6 +13,8 @@ Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de f
 - ⚡ **Interface Leve**: Design moderno e responsivo com excelente performance
 - 🛡️ **Tratamento de Erros**: Mensagens claras sobre problemas de carregamento
 - 💾 **Persistência**: Favoritos salvos automaticamente
+- 🌐 **Modo Servidor**: Compartilhe seus canais na rede local
+- 📺 **Chromecast**: Transmita canais para dispositivos Chromecast (NOVO!)
 
 ## 🚀 Como Usar
 
@@ -39,6 +42,11 @@ npm start
 - Cole a URL da playlist no campo de texto
 - Clique em "🌐 Carregar URL" ou pressione Enter
 
+**Opção C - Vídeo Local:**
+- Menu: Arquivo > Abrir Vídeo... (ou Ctrl/Cmd+Shift+O)
+- Selecione um arquivo de vídeo (MP4, OGV, WebM, MKV, AVI, MOV)
+- O vídeo será reproduzido diretamente no player
+
 ### 2. Navegar pelos Canais
 
 - Use a barra de busca para filtrar canais
@@ -52,7 +60,15 @@ npm start
 - Use o botão de favorito no player para o canal atual
 - Acesse rapidamente na aba "Favoritos"
 
-### 4. Tratamento de Erros
+### 4. Transmitir para Chromecast 📺
+
+- Reproduza um canal
+- Clique no botão 📺 ao lado do botão de favoritos
+- Selecione seu dispositivo Chromecast na lista
+- O canal será transmitido automaticamente!
+- [Veja o guia completo do Chromecast](CHROMECAST.md)
+
+### 5. Tratamento de Erros
 
 A aplicação possui retry automático:
 - Até 3 tentativas automáticas em caso de falha

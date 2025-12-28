@@ -49,11 +49,27 @@ const elements = {
     tabBtns: document.querySelectorAll('.tab-btn'),
     exportFavoritesBtn: document.getElementById('exportFavoritesBtn'),
     importFavoritesBtn: document.getElementById('importFavoritesBtn'),
-    favoritesActions: document.getElementById('favoritesActions')
+    favoritesActions: document.getElementById('favoritesActions'),
+    castBtn: document.getElementById('castBtn'),
+    castIcon: document.getElementById('castIcon'),
+    castModal: document.getElementById('castModal'),
+    closeCastModal: document.getElementById('closeCastModal'),
+    castBadge: document.getElementById('castBadge'),
+    castStatusText: document.getElementById('castStatusText'),
+    devicesList: document.getElementById('devicesList'),
+    castControls: document.getElementById('castControls'),
+    connectedDevice: document.getElementById('connectedDevice'),
+    castingChannel: document.getElementById('castingChannel'),
+    stopCastBtn: document.getElementById('stopCastBtn')
 };
 
 // Estado do servidor
 let serverRunning = false;
+
+// Estado do Chromecast
+let chromecastDevices = [];
+let connectedChromecast = null;
+let isCasting = false;
 
 // Inicialização
 async function init() {
@@ -66,6 +82,11 @@ async function init() {
     // Listener para menu
     ipcRenderer.on('trigger-load-m3u', () => {
         loadM3uFile();
+    });
+    
+    // Listener para abrir vídeo via menu
+    ipcRenderer.on('trigger-open-video', () => {
+        openVideoFile();
     });
     
     // Listener para toggle de servidor via menu
@@ -305,6 +326,9 @@ function setupEventListeners() {
     elements.toggleServerBtn.addEventListener('click', toggleServer);
     elements.exportFavoritesBtn.addEventListener('click', exportFavorites);
     elements.importFavoritesBtn.addEventListener('click', importFavorites);
+    elements.castBtn.addEventListener('click', showCastModal);
+    elements.closeCastModal.addEventListener('click', closeCastModal);
+    elements.stopCastBtn.addEventListener('click', stopCasting);
     elements.urlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') loadM3uFromUrl();
     });
@@ -325,6 +349,12 @@ function setupEventListeners() {
         }
     });
     
+    elements.castModal.addEventListener('click', (e) => {
+        if (e.target === elements.castModal) {
+            closeCastModal();
+        }
+    });
+    
     // Tabs
     elements.tabBtns.forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -337,6 +367,36 @@ function setupEventListeners() {
     elements.videoPlayer.addEventListener('stalled', handleStalled);
     elements.videoPlayer.addEventListener('waiting', handleWaiting);
     elements.videoPlayer.addEventListener('playing', handlePlaying);
+}
+
+// Abrir arquivo de vídeo local
+async function openVideoFile() {
+    try {
+        const result = await ipcRenderer.invoke('open-video-file');
+        
+        if (result.canceled) {
+            return;
+        }
+        
+        if (result.success) {
+            // Criar um "canal" virtual para o vídeo
+            const videoChannel = {
+                name: result.fileName,
+                url: result.filePath,
+                group: 'Vídeo Local',
+                logo: '',
+                isLocalVideo: true
+            };
+            
+            // Reproduzir o vídeo
+            playChannel(videoChannel);
+            
+            showNotification(`Reproduzindo: ${result.fileName}`, 'success');
+        }
+    } catch (error) {
+        console.error('Erro ao abrir vídeo:', error);
+        showNotification('Erro ao abrir arquivo de vídeo', 'error');
+    }
 }
 
 // Carregar M3U do arquivo
@@ -626,6 +686,7 @@ function showPlayingState() {
     elements.loadingIndicator.style.display = 'none';
     elements.errorIndicator.style.display = 'none';
     elements.currentChannelInfo.style.display = 'flex';
+    elements.castBtn.style.display = 'block';
 }
 
 function showErrorState(message) {
@@ -934,6 +995,151 @@ function copyServerUrl() {
 
 // Expor função para uso no HTML
 window.copyServerUrl = copyServerUrl;
+
+// ============ CHROMECAST FUNCTIONS ============
+
+// Descobrir dispositivos Chromecast
+async function discoverChromecastDevices() {
+    try {
+        elements.castStatusText.textContent = 'Procurando dispositivos...';
+        const devices = await ipcRenderer.invoke('discover-chromecast');
+        
+        chromecastDevices = devices;
+        renderChromecastDevices();
+        
+        if (devices.length === 0) {
+            elements.castStatusText.textContent = 'Nenhum dispositivo encontrado';
+        } else {
+            elements.castStatusText.textContent = `${devices.length} dispositivo(s) encontrado(s)`;
+        }
+    } catch (error) {
+        console.error('Erro ao descobrir dispositivos:', error);
+        elements.castStatusText.textContent = 'Erro ao buscar dispositivos';
+        showNotification('Erro ao buscar dispositivos Chromecast', 'error');
+    }
+}
+
+// Renderizar lista de dispositivos
+function renderChromecastDevices() {
+    if (chromecastDevices.length === 0) {
+        elements.devicesList.innerHTML = `
+            <div class="loading-devices">
+                <p>😔 Nenhum dispositivo Chromecast encontrado na rede</p>
+                <button class="btn btn-primary" onclick="discoverChromecastDevices()">
+                    🔄 Buscar Novamente
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    elements.devicesList.innerHTML = chromecastDevices.map(device => `
+        <div class="device-item" onclick="connectToChromecast('${device.host}', '${device.name}')">
+            <div class="device-info">
+                <div class="device-name">${device.name}</div>
+                <div class="device-address">${device.host}</div>
+            </div>
+            <div class="device-icon">📺</div>
+        </div>
+    `).join('');
+}
+
+// Conectar ao Chromecast
+async function connectToChromecast(host, name) {
+    if (!currentChannel) {
+        showNotification('Selecione um canal primeiro', 'warning');
+        return;
+    }
+    
+    try {
+        showNotification('Conectando ao Chromecast...', 'info');
+        
+        const result = await ipcRenderer.invoke('connect-chromecast', {
+            host,
+            name,
+            streamUrl: currentChannel.url,
+            title: currentChannel.name,
+            subtitle: currentChannel.group || 'IPTV Channel'
+        });
+        
+        if (result.success) {
+            connectedChromecast = { host, name };
+            isCasting = true;
+            updateCastUI();
+            closeCastModal();
+            showNotification(`✅ Transmitindo para ${name}`, 'success');
+        } else {
+            showNotification('Erro ao conectar: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao conectar ao Chromecast:', error);
+        showNotification('Erro ao conectar ao Chromecast', 'error');
+    }
+}
+
+// Parar transmissão
+async function stopCasting() {
+    try {
+        const result = await ipcRenderer.invoke('stop-chromecast');
+        
+        if (result.success) {
+            isCasting = false;
+            connectedChromecast = null;
+            updateCastUI();
+            closeCastModal();
+            showNotification('Transmissão encerrada', 'success');
+        } else {
+            showNotification('Erro ao parar transmissão', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao parar casting:', error);
+        showNotification('Erro ao parar transmissão', 'error');
+    }
+}
+
+// Atualizar UI do cast
+function updateCastUI() {
+    if (isCasting) {
+        elements.castBtn.classList.add('casting');
+        elements.castIcon.textContent = '📡';
+        elements.castBadge.classList.add('connected');
+        elements.castStatusText.textContent = 'Conectado';
+        elements.connectedDevice.textContent = connectedChromecast.name;
+        elements.castingChannel.textContent = currentChannel.name;
+        elements.devicesList.parentElement.style.display = 'none';
+        elements.castControls.style.display = 'block';
+    } else {
+        elements.castBtn.classList.remove('casting');
+        elements.castIcon.textContent = '📺';
+        elements.castBadge.classList.remove('connected');
+        elements.castStatusText.textContent = 'Procurando dispositivos...';
+        elements.devicesList.parentElement.style.display = 'block';
+        elements.castControls.style.display = 'none';
+    }
+}
+
+// Mostrar modal do Chromecast
+function showCastModal() {
+    elements.castModal.style.display = 'flex';
+    
+    if (isCasting) {
+        updateCastUI();
+    } else {
+        discoverChromecastDevices();
+    }
+}
+
+// Fechar modal do Chromecast
+function closeCastModal() {
+    elements.castModal.style.display = 'none';
+}
+
+// Expor funções para uso no HTML
+window.discoverChromecastDevices = discoverChromecastDevices;
+window.connectToChromecast = connectToChromecast;
+window.stopCasting = stopCasting;
+
+// ============ END CHROMECAST FUNCTIONS ============
 
 // Inicializar app
 init();

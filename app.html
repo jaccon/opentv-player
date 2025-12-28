@@ -98,6 +98,51 @@
             </div>
         </div>
 
+        <!-- Modal de Chromecast -->
+        <div id="castModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📺 Transmitir para Chromecast</h2>
+                    <button class="modal-close" id="closeCastModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="cast-status-container">
+                        <div id="castStatusInfo" class="cast-status-info">
+                            <div class="cast-status-badge" id="castBadge">
+                                <span class="status-dot"></span>
+                                <span id="castStatusText">Procurando dispositivos...</span>
+                            </div>
+                        </div>
+
+                        <div id="devicesContainer" class="devices-container">
+                            <div id="devicesList" class="devices-list">
+                                <div class="loading-devices">
+                                    <div class="spinner-small"></div>
+                                    <p>Buscando dispositivos Chromecast na rede...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="castControls" class="cast-controls" style="display: none;">
+                            <div class="cast-info-card">
+                                <div class="cast-label">Dispositivo Conectado:</div>
+                                <div class="cast-value" id="connectedDevice">-</div>
+                            </div>
+                            <div class="cast-info-card">
+                                <div class="cast-label">Canal Atual:</div>
+                                <div class="cast-value" id="castingChannel">-</div>
+                            </div>
+                            <div class="cast-actions">
+                                <button id="stopCastBtn" class="btn btn-danger">
+                                    🛑 Parar Transmissão
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="main-content">
             <!-- Sidebar com lista de canais -->
             <aside class="sidebar">
@@ -159,9 +204,14 @@
                         <h3 id="currentChannelName">-</h3>
                         <p id="currentChannelGroup">-</p>
                     </div>
-                    <button id="toggleFavoriteBtn" class="btn-favorite">
-                        <span id="favoriteIcon">☆</span>
-                    </button>
+                    <div class="channel-actions">
+                        <button id="castBtn" class="btn-cast" title="Transmitir para Chromecast" style="display: none;">
+                            <span id="castIcon">📺</span>
+                        </button>
+                        <button id="toggleFavoriteBtn" class="btn-favorite">
+                            <span id="favoriteIcon">☆</span>
+                        </button>
+                    </div>
                 </div>
             </main>
         </div>

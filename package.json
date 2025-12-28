@@ -1,8 +1,8 @@
 {
   "name": "opentv-player",
   "productName": "OpenTV Player",
-  "version": "0.4.0",
-  "description": "Aplicação leve para visualizar IPTV com sistema de favoritos, modo servidor e compartilhamento de listas",
+  "version": "0.5.0",
+  "description": "Aplicação leve para visualizar IPTV com sistema de favoritos, modo servidor e suporte a Chromecast",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -88,6 +88,8 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
+    "bonjour-hap": "^3.7.0",
+    "castv2": "^0.1.10",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "hls.js": "^1.6.15"

@@ -2,6 +2,43 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [0.5.0] - 2025-12-27
+
+### 🎉 Novas Funcionalidades
+
+- **📺 Suporte a Chromecast**: Transmita canais IPTV para dispositivos Chromecast na sua rede local
+  - Descoberta automática de dispositivos usando mDNS
+  - Interface intuitiva para seleção de dispositivo
+  - Indicador visual quando está transmitindo
+  - Controles para parar transmissão
+  - Suporte a streams HLS (HTTP Live Streaming)
+- **🎬 Reprodução de Vídeos Locais**: Abra e reproduza arquivos de vídeo diretamente
+  - Suporte a MP4, OGV, WebM, MKV, AVI, MOV
+  - Opção no menu: Arquivo > Abrir Vídeo...
+  - Atalho de teclado: Ctrl/Cmd+Shift+O
+  - Reprodução integrada no player principal
+
+### 📄 Documentação
+
+- Adicionado guia completo do Chromecast (`CHROMECAST.md`)
+- README atualizado com informações sobre as novas funcionalidades
+- Documentação de troubleshooting para problemas comuns
+
+### 🎨 Interface
+
+- Botão de Chromecast aparece durante reprodução de canal
+- Modal moderno para seleção de dispositivos
+- Animações e indicadores visuais de status
+- Design consistente com o resto da aplicação
+
+### 🔧 Melhorias Técnicas
+
+- Integração com `castv2` para comunicação com Chromecast
+- Discovery de dispositivos via `bonjour-hap`
+- Comunicação IPC entre renderer e main process
+- Limpeza automática de conexões ao fechar app
+- Handler IPC para seleção de arquivos de vídeo
+
 ## [0.4.0] - 2025-12-26
 
 ### 🎉 Novas Funcionalidades

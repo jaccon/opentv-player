@@ -4,12 +4,20 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const os = require('os');
+const Bonjour = require('bonjour-hap');
+const Client = require('castv2').Client;
+const DefaultMediaReceiver = require('castv2').DefaultMediaReceiver;
 
 let mainWindow;
 let httpServer = null;
 let serverApp = null;
 let serverRunning = false;
 const SERVER_PORT = 2323;
+
+// Estado do Chromecast
+let chromecastClient = null;
+let chromecastPlayer = null;
+let bonjourBrowser = null;
 
 // Caminhos para armazenar dados
 const favoritesPath = path.join(app.getPath('userData'), 'favorites.json');
@@ -54,6 +62,13 @@ function createWindow() {
           accelerator: 'CmdOrCtrl+O',
           click: () => {
             mainWindow.webContents.send('trigger-load-m3u');
+          }
+        },
+        {
+          label: 'Abrir Vídeo...',
+          accelerator: 'CmdOrCtrl+Shift+O',
+          click: () => {
+            mainWindow.webContents.send('trigger-open-video');
           }
         },
         { type: 'separator' },
@@ -130,6 +145,31 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// IPC Handler para abrir vídeos locais
+ipcMain.handle('open-video-file', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Abrir Vídeo',
+    filters: [
+      { name: 'Vídeos', extensions: ['mp4', 'ogv', 'webm', 'mkv', 'avi', 'mov'] },
+      { name: 'Todos os arquivos', extensions: ['*'] }
+    ],
+    properties: ['openFile']
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { canceled: true };
+  }
+
+  const filePath = result.filePaths[0];
+  const fileName = path.basename(filePath);
+  
+  return {
+    success: true,
+    filePath: filePath,
+    fileName: fileName
+  };
 });
 
 // IPC Handlers para gerenciar favoritos
@@ -516,8 +556,17 @@ ipcMain.handle('get-server-status', async () => {
 
 // Parar servidor ao fechar app
 app.on('before-quit', () => {
+  // Parar servidor HTTP
   if (httpServer) {
     httpServer.close();
+  }
+  
+  // Limpar conexões do Chromecast
+  if (chromecastClient) {
+    chromecastClient.close();
+  }
+  if (bonjourBrowser) {
+    bonjourBrowser.stop();
   }
 });
 
@@ -527,4 +576,139 @@ ipcMain.handle('share-channels', async (event, channelsData) => {
   global.sharedChannels = channelsData;
   return { success: true };
 });
+
+// ============ CHROMECAST FUNCTIONS ============
+
+// Descobrir dispositivos Chromecast na rede
+ipcMain.handle('discover-chromecast', async () => {
+  return new Promise((resolve) => {
+    const devices = [];
+    const timeout = 5000; // 5 segundos para descoberta
+    
+    try {
+      // Criar instância do Bonjour
+      const bonjour = new Bonjour();
+      
+      // Buscar dispositivos Chromecast (_googlecast._tcp)
+      bonjourBrowser = bonjour.find({ type: 'googlecast' }, (service) => {
+        console.log('Chromecast encontrado:', service.name);
+        
+        // Adicionar dispositivo à lista
+        if (service.addresses && service.addresses.length > 0) {
+          devices.push({
+            name: service.name || service.host,
+            host: service.addresses[0],
+            port: service.port || 8009
+          });
+        }
+      });
+      
+      // Parar busca após timeout
+      setTimeout(() => {
+        if (bonjourBrowser) {
+          bonjourBrowser.stop();
+          bonjour.destroy();
+        }
+        console.log(`Descoberta finalizada. ${devices.length} dispositivo(s) encontrado(s)`);
+        resolve(devices);
+      }, timeout);
+      
+    } catch (error) {
+      console.error('Erro ao descobrir Chromecast:', error);
+      resolve([]);
+    }
+  });
+});
+
+// Conectar ao Chromecast e transmitir
+ipcMain.handle('connect-chromecast', async (event, data) => {
+  const { host, name, streamUrl, title, subtitle } = data;
+  
+  return new Promise((resolve) => {
+    try {
+      // Criar cliente Chromecast
+      chromecastClient = new Client();
+      
+      chromecastClient.connect(host, () => {
+        console.log('Conectado ao Chromecast:', name);
+        
+        // Lançar aplicação de mídia padrão
+        chromecastClient.launch(DefaultMediaReceiver, (err, player) => {
+          if (err) {
+            console.error('Erro ao lançar player:', err);
+            resolve({ success: false, error: err.message });
+            return;
+          }
+          
+          chromecastPlayer = player;
+          
+          // Configurar mídia para transmissão
+          const media = {
+            contentId: streamUrl,
+            contentType: 'application/x-mpegURL', // HLS stream
+            streamType: 'LIVE',
+            metadata: {
+              type: 0,
+              metadataType: 0,
+              title: title,
+              subtitle: subtitle
+            }
+          };
+          
+          // Carregar e reproduzir mídia
+          player.load(media, { autoplay: true }, (err, status) => {
+            if (err) {
+              console.error('Erro ao carregar mídia:', err);
+              resolve({ success: false, error: err.message });
+              return;
+            }
+            
+            console.log('Mídia carregada com sucesso:', status);
+            resolve({ success: true, status });
+          });
+        });
+      });
+      
+      chromecastClient.on('error', (err) => {
+        console.error('Erro no cliente Chromecast:', err);
+        resolve({ success: false, error: err.message });
+      });
+      
+    } catch (error) {
+      console.error('Erro ao conectar ao Chromecast:', error);
+      resolve({ success: false, error: error.message });
+    }
+  });
+});
+
+// Parar transmissão do Chromecast
+ipcMain.handle('stop-chromecast', async () => {
+  return new Promise((resolve) => {
+    try {
+      if (chromecastPlayer) {
+        chromecastPlayer.stop(() => {
+          console.log('Transmissão parada');
+          
+          if (chromecastClient) {
+            chromecastClient.close();
+            chromecastClient = null;
+          }
+          
+          chromecastPlayer = null;
+          resolve({ success: true });
+        });
+      } else if (chromecastClient) {
+        chromecastClient.close();
+        chromecastClient = null;
+        resolve({ success: true });
+      } else {
+        resolve({ success: true, message: 'Nenhuma transmissão ativa' });
+      }
+    } catch (error) {
+      console.error('Erro ao parar Chromecast:', error);
+      resolve({ success: false, error: error.message });
+    }
+  });
+});
+
 

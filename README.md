@@ -1,6 +1,6 @@
 # 📺 IPTV Player
 
-Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de favoritos e modo servidor web.
+Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de favoritos, modo servidor web e suporte a Chromecast.
 
 ## ⚠️ Aviso para Usuários Windows
 
@@ -10,15 +10,17 @@ Aplicação Electron leve e moderna para visualizar canais IPTV com sistema de f
 ## ✨ Características
 
 - 🎥 **Reprodução de IPTV** - Suporta streams M3U/M3U8 via URL ou arquivo local
-- 🌐 **Modo Servidor Web** - Acesse seus canais de qualquer dispositivo na rede (porta 2323)
+- � **Reprodução de Vídeos Locais** - Abra arquivos MP4, OGV, WebM, MKV, AVI, MOV
+- �🌐 **Modo Servidor Web** - Acesse seus canais de qualquer dispositivo na rede (porta 2323)
 - ⭐ **Sistema de Favoritos** - Marque seus canais favoritos para acesso rápido
-- � **Exportar/Importar Favoritos** - Compartilhe listas de favoritos com outros usuários
-- �🔍 **Busca Inteligente** - Encontre canais por nome ou grupo
+- 💾 **Exportar/Importar Favoritos** - Compartilhe listas de favoritos com outros usuários
+- 🔍 **Busca Inteligente** - Encontre canais por nome ou grupo
 - 🎨 **Interface Moderna** - Design clean e responsivo com tema escuro
 - 💪 **Tratamento de Erros** - Sistema de retry automático e mensagens claras
 - 📊 **Organização por Grupos** - Canais organizados automaticamente por categoria
 - 📱 **Acesso Remoto** - Interface web responsiva para mobile, tablet e desktop
 - 🚀 **Performance** - Aplicação leve e otimizada
+- 📺 **Chromecast** - Transmita canais para dispositivos Chromecast (NOVO!)
 
 ## 🚀 Como Usar
 
@@ -42,6 +44,11 @@ npm start
    - Cole a URL do arquivo M3U no campo de texto
    - Clique em "🌐 Carregar URL" ou pressione Enter
 
+3. **Vídeo Local:**
+   - Menu: Arquivo > Abrir Vídeo... (ou Ctrl/Cmd+Shift+O)
+   - Selecione arquivo de vídeo (MP4, OGV, WebM, MKV, AVI, MOV)
+   - Reprodução imediata no player
+
 ### Usar a Aplicação
 
 - **Assistir Canal:** Clique em qualquer canal na lista
@@ -51,8 +58,10 @@ npm start
 - **Exportar Favoritos:** Na aba Favoritos, clique em "📤 Exportar" para salvar seus favoritos em um arquivo JSON
 - **Importar Favoritos:** Na aba Favoritos, clique em "📥 Importar" para adicionar favoritos de um arquivo JSON
   - 📖 **[Saiba mais sobre Exportar/Importar Favoritos](EXPORTAR-FAVORITOS.md)**
+- **Transmitir para Chromecast:** Clique no botão 📺 durante a reprodução de um canal
+  - 📖 **[Guia completo do Chromecast](CHROMECAST.md)**
 
-### Modo Servidor (Novo! v0.2.0)
+### Modo Servidor (v0.2.0)
 
 1. **Ativar Servidor:**
    - Clique no botão "🌐 Servidor" no cabeçalho, OU
